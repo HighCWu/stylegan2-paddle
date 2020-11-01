@@ -1,0 +1,1 @@
+from stylegan2_paddle.vector_quantize.vector_quantize import VectorQuantize

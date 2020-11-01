@@ -1,38 +1,32 @@
 import sys
 from setuptools import setup, find_packages
 
-sys.path[0:0] = ['stylegan2_pytorch']
+sys.path[0:0] = ['stylegan2_paddle']
 from version import __version__
 
 setup(
-  name = 'stylegan2_pytorch',
+  name = 'stylegan2_paddle',
   packages = find_packages(),
   entry_points={
       'console_scripts': [
-          'stylegan2_pytorch = stylegan2_pytorch.cli:main',
+          'stylegan2_paddle = stylegan2_paddle.cli:main',
       ],
   },
   version = __version__,
   license='GPLv3+',
-  description = 'StyleGan2 in Pytorch',
-  author = 'Phil Wang',
-  author_email = 'lucidrains@gmail.com',
-  url = 'https://github.com/lucidrains/stylegan2-pytorch',
-  download_url = 'https://github.com/lucidrains/stylegan2-pytorch/archive/v_036.tar.gz',
+  description = 'StyleGan2 in PaddlePaddle',
+  author = 'Hecong Wu',
+  author_email = 'hecongw@gmail.com',
+  url = 'https://github.com/HighCWu/stylegan2-paddle',
+  download_url = 'https://github.com/HighCWu/stylegan2-paddle/archive/v_036.tar.gz',
   keywords = ['generative adversarial networks', 'artificial intelligence'],
   install_requires=[
-      'contrastive_learner>=0.1.0',
       'fire',
-      'kornia',
-      'linear_attention_transformer>=0.12',
       'numpy',
       'retry',
       'tqdm',
-      'torch',
-      'torchvision',
-      'pillow',
-      'pytorch-fid',
-      'vector-quantize-pytorch>=0.1.0'
+      'paddlepaddle-gpu', # paddlepaddle-gpu>=2.0.0
+      'pillow'
   ],
   classifiers=[
       'Development Status :: 4 - Beta',

@@ -1,3 +1,34 @@
+## Simple StyleGan2 for PaddlePaddle
+根据[lucidrains/stylegan2-pytorch](https://github.com/lucidrains/stylegan2-pytorch)修改而来。
+
+仍然在修改过程中。当前不是稳定版本，需预先安装PaddlePaddle GPU develop版本。
+
+在开始之前建议先浏览下面标注的尚未完成部分，因为当前代码可能还不足以支持完成一次漂亮完整的StyleGAN2训练，不过最基本的训练已经可以做到了。
+
+在完成PaddlePaddle的安装后，在本仓库的本地克隆路径下运行`pip install .`完成安装。
+
+在其它路径下输入命令行进行训练(梯度累加似乎不太有效，所以用例建议为1)：
+```bash
+stylegan2_paddle --data data/ffhq --num_workers 8 --use_shared_memory False --image_size 32 --batch_size 64 --gradient_accumulate_every 1
+```
+
+相较于原仓库，做出以下修改：
+
+- 1. Conv2DMod和filter2D使用的组卷积由于当前版本PaddlePaddle不支持depthwise conv2d的二阶导，替换为等效操作，前者有关于生成器的Path Length Regularization（未完成），后者有关于判别器的Gradient Penalty。
+- 2. filter2D的Reflect Pad由于当前版本的PaddlePaddle不支持pad的二阶导，便直接使用了支持二阶导的conv2d算子内部的zero padding。此法不等效于Reflect Padding。
+
+尚未完成的部分:
+
+- 1. Path Length Regularization，有助于生成器生成更好的效果，但像Upsample之类的操作二阶导在当前版本PaddlePaddle中未受支持，故被注释掉。
+- 2. 对比学习，对应调用的库太繁复，不易参考实现。
+- 3. fp16和多卡训练，在完成基本stylegan2的基础版本之前，不是必须去实现的部分。
+- 4. 矢量量化字典查找、图像线性Transformer、FID计算，虽然都进行了实现，但前两者没有在训练中进行实际测试，也不是基本训练的必须项。
+- 5. 还有更多的tricks没有进行测试，重点集中在基本的训练上。
+
+Modified according to [lucidrains/stylegan2-pytorch](https://github.com/lucidrains/stylegan2-pytorch)
+
+The following is the `README.md` of the original repo.
+
 ## Simple StyleGan2 for Pytorch
 [![PyPI version](https://badge.fury.io/py/stylegan2-pytorch.svg)](https://badge.fury.io/py/stylegan2-pytorch)
 

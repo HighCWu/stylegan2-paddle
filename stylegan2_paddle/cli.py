@@ -5,11 +5,10 @@ from retry.api import retry_call
 from tqdm import tqdm
 from datetime import datetime
 from functools import wraps
-from stylegan2_pytorch import Trainer, NanException
+from stylegan2_paddle import Trainer, NanException
 
-import torch
-import torch.multiprocessing as mp
-import torch.distributed as dist
+import paddle
+import paddle.distributed as dist
 
 import numpy as np
 
@@ -22,13 +21,12 @@ def timestamped_filename(prefix = 'generated-'):
     return f'{prefix}{timestamp}'
 
 def set_seed(seed):
-    torch.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    paddle.seed(seed)
+    paddle.framework.random._manual_program_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
 
-def run_training(rank, world_size, model_args, data, load_from, new, num_train_steps, name, seed):
+def run_training(rank, world_size, model_args, data, load_from, new, num_train_steps, name, seed, use_shared_memory):
     is_main = rank == 0
     is_ddp = world_size > 1
 
@@ -53,7 +51,7 @@ def run_training(rank, world_size, model_args, data, load_from, new, num_train_s
     else:
         model.clear()
 
-    model.set_data_src(data)
+    model.set_data_src(data, use_shared_memory)
 
     for _ in tqdm(range(num_train_steps - model.steps), initial = model.steps, total = num_train_steps, mininterval=10., desc=f'{name}<{data}>'):
         retry_call(model.train, tries=3, exceptions=NanException)
@@ -105,7 +103,8 @@ def train_from_folder(
     dataset_aug_prob = 0.,
     multi_gpus = False,
     calculate_fid_every = None,
-    seed = 42
+    seed = 42,
+    use_shared_memory = True, # set to False if /dev/shm is limited
 ):
     model_args = dict(
         name = name,
@@ -155,14 +154,14 @@ def train_from_folder(
         print(f'interpolation generated at {results_dir}/{name}/{samples_name}')
         return
 
-    world_size = torch.cuda.device_count()
+    world_size = dist.get_world_size()
 
     if world_size == 1 or not multi_gpus:
-        run_training(0, 1, model_args, data, load_from, new, num_train_steps, name, seed)
+        run_training(0, 1, model_args, data, load_from, new, num_train_steps, name, seed, use_shared_memory)
         return
 
-    mp.spawn(run_training,
-        args=(world_size, model_args, data, load_from, new, num_train_steps, name, seed),
+    dist.spawn(run_training,
+        args=(world_size, model_args, data, load_from, new, num_train_steps, name, seed, use_shared_memory),
         nprocs=world_size,
         join=True)
 
