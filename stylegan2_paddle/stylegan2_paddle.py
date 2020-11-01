@@ -684,8 +684,8 @@ class StyleGAN2(nn.Layer):
     def EMA(self):
         def update_moving_average(ma_model, current_model):
             for current_params, ma_params in zip(current_model.parameters(), ma_model.parameters()):
-                old_weight, up_weight = ma_params.data, current_params.data
-                ma_params.data = self.ema_updater.update_average(old_weight, up_weight)
+                old_weight, up_weight = ma_params, current_params
+                ma_params[:] = self.ema_updater.update_average(old_weight, up_weight).detach()
 
         update_moving_average(self.SE, self.S)
         update_moving_average(self.GE, self.G)
